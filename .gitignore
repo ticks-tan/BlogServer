@@ -1,0 +1,8 @@
+.idea/
+c[C]make-b[B]uild-d[D]ebug/
+web/blog_files/
+
+*.o
+*.i
+*.log
+
