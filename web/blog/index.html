@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Ticks的博客-测试</title>
+</head>
+
+<style>
+    body{
+        background: #ffffff;
+    }
+
+    .app_title{
+        text-align: center;
+    }
+    .app_title_des{
+        color: black;
+        font-size: 1.2em;
+        text-align: center;
+    }
+
+    .search_box{
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    .search_bar{
+        position: relative;
+    }
+    #search_input{
+        width: 45vw;
+        padding: 15px 0 15px 15px;
+        background: #efefef;
+        border: none;
+        border-radius: 4px;
+        outline: none;
+        line-height: 1.15;
+        color: black;
+        text-indent: 40px;
+        transition: text-indent .4s linear;
+    }
+    #search_input::placeholder{
+        opacity: 0;
+    }
+    #search_input:focus::placeholder{
+        opacity: 1;
+    }
+    #search_input:focus{
+        text-indent: 0;
+        transition: text-indent .4s linear;
+    }
+
+    #search_input:focus + label{
+        transform: translateY(-120%) scale(1.2);
+    }
+    .search_label{
+        position: absolute;
+        top: 11px;
+        bottom: 10px;
+        left: 0;
+        padding-left: 15px;
+        border-radius: 3px;
+        font-weight: bold;
+        transform: translateY(0%) scale(1);
+        transition: transform .3s;
+    }
+
+    .blogs_box{
+        position: relative;
+        width: 60%;
+        margin-left: 20%;
+        margin-right: 20%;
+        margin-top: 20px;
+        display: flex;
+        justify-content: center;
+        align-content: center;
+        flex-direction: row;
+        flex-wrap: wrap;
+        padding: 10px;
+    }
+
+    .blog_item{
+        margin: 10px;
+        width: 100%;
+        background: #eeeeee;
+        padding: 10px;
+        border-radius: 8px;
+    }
+    .blog_item:hover{
+        cursor: pointer;
+    }
+
+    .blog_title{
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        padding-left: 10px;
+    }
+    .blog_date{
+        text-align: end;
+        padding-right: 10px;
+    }
+
+    #load_more{
+        min-width: 20%;
+        width: fit-content;
+        text-align: center;
+        display: flex;
+        line-height: 40px;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        justify-content: center;
+        align-content: end;
+    }
+
+    #load_more span{
+        margin: 0 2px;
+        text-align: center;
+        font-size: smaller;
+        animation: loadMore 1s linear both;
+    }
+
+    @keyframes loadMore {
+        from{
+            transform: scale(0.7);
+        }
+        25%{
+            transform: scale(1.1);
+        }
+        50%{
+            transform: scale(1.3);
+        }
+        75%{
+            transform: scale(1);
+        }
+        to{
+            transform: scale(0.7);
+        }
+    }
+
+</style>
+
+<body>
+
+<div class="main_app">
+    <div>
+        <h1 class="app_title"><a href="../index.html" style="text-decoration: none;color: black">Ticks</a></h1>
+        <p class="app_title_des">哎，又是没有写博客的一天-_-</p>
+        <div class="search_box">
+            <div class="search_bar">
+                <input id="search_input" type="search" name="keyword" autocomplete="off" placeholder="输入标签，关键字等">
+                <label class="search_label">搜索</label>
+            </div>
+        </div>
+        <div class="blogs_box">
+            <div class="blog_item">
+                <h3 class="blog_title" title="Mysql简单使用">Mysql简单使用</h3>
+                <h5 class="blog_date">2022-6-12 23:23:23</h5>
+            </div>
+            <div class="blog_item">
+                <h3 class="blog_title" title="关于C++中的auto用法">关于C++中的auto用法</h3>
+                <h5 class="blog_date">2022-6-12 23:23:23</h5>
+            </div>
+            <div class="blog_item">
+                <h3 class="blog_title" title="ArchLinux安装MariaDB">ArchLinux安装MariaDB</h3>
+                <h5 class="blog_date">2022-6-12 23:23:23</h5>
+            </div>
+            <div class="blog_item">
+                <h3 class="blog_title" title="Linux C语言Exec系列函数介绍">Linux C语言Exec系列函数介绍</h3>
+                <h5 class="blog_date">2022-6-12 23:23:23</h5>
+            </div>
+            <p class="blog_item" id="load_more">点击加载更多</p>
+        </div>
+    </div>
+</div>
+
+<script>
+
+    // 加载更多
+    class MyLoadMore{
+        constructor(load_more) {
+            this.run = false;
+            this.loadMore = load_more;
+            this.timeId = 0;
+            this.letters = ['⬤','⬤','⬤','⬤','⬤','⬤','⬤'];
+        }
+
+        // 开始加载
+        startLoadMore(){
+            this.run = true;
+            this.start();
+        }
+        // 开始动画
+        start(){
+            let this_ = this;
+            this.loadMore.innerHTML = "";
+            for (let i = 0; i < this.letters.length; ++i) {
+                let span = document.createElement("span");
+                span.textContent = this.letters[i];
+                span.style.animationDelay = i * 0.1 + "s";
+                this.loadMore.append(span);
+            }
+            if (this_.run === true) {
+                this_.timeId = setTimeout(function () {
+                    this_.start();
+                }, 2000);
+            }
+        }
+        // 停止加载
+        stopLoadMore(){
+            this.run = false;
+            clearTimeout(this.timeId);
+            this.loadMore.innerHTML = "点击加载更多";
+        }
+    }
+
+    let load_more = document.getElementById("load_more");
+    let loadMore = new MyLoadMore(load_more);
+
+    load_more.onclick = function (){
+        loadMore.startLoadMore();
+        setTimeout(function (){
+            loadMore.stopLoadMore();
+        }, 5000);
+    }
+
+</script>
+
+</body>
+</html>

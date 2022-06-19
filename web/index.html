@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>网站主页-测试</title>
+</head>
+<style>
+
+    body{
+        display: flex;
+        height: 100vh;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        background: #171A1F;
+    }
+
+    .menu_box{
+        position: relative;
+        width: 40%;
+        display: flex;
+        flex-direction: column;
+        justify-content: start;
+    }
+
+    .menu_item{
+        padding-left: 5px;
+        padding-right: 5px;
+    }
+
+    /* 文字右移动画，以后不要使用 transition的 height width padding等等属性！！！ 卡死你 */
+    .menu_item .item_name{
+        transform: translateX(0);
+        transform-origin: left;
+        transition: transform 0.5s;
+    }
+    .menu_item:hover .item_name{
+        transform: translateX(50%);
+        transform-origin: left;
+    }
+
+    .item_a {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        text-decoration: none;
+        color: white;
+        transition: 0.4s;
+    }
+
+    .menu_item::after{
+        position: absolute;
+        content: "";
+        left: 0;
+        width: 100%;
+        height: 3px;
+        background: #7878d0;
+        transform: scaleX(0);
+        transform-origin: left;
+        transition: transform 0.6s;
+    }
+    .menu_item:hover::after{
+        transform: scaleX(1);
+        transform-origin: left;
+    }
+
+    .one_word{
+        width: 70%;
+        margin-bottom: 20px;
+        color: white;
+        white-space: pre;
+        font-size: large;
+        font-weight: bold;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        line-height: 1.8;
+    }
+    .one_word span{
+        animation: oneWord 0.8s ease-out both;
+    }
+
+    /* 文字显示动画 */
+    @keyframes oneWord {
+        from {
+            opacity: 0;
+            transform: translateY(-40%) translateX(-30%);
+        }
+        65% {
+            opacity: 1;
+        }
+        75% {
+            opacity: 1;
+        }
+        to {
+            opacity: 0.8;
+            transform: translateY(0) translateX(0) scale(1);
+        }
+        /*
+        from{
+            opacity: 0;
+            transform: translateY(-30%);
+        }
+        to{
+            opacity: 1;
+            transform: translateY(0);
+        }
+         */
+    }
+</style>
+<body>
+
+<p class="one_word">Pretending to have a certain quality is actually an admission that you don't have such a quality.</p>
+
+<div class="menu_box">
+        <div class="menu_item">
+            <a class="item_a" href="#">
+                <h2 class="item_name">Home</h2>
+                <span class="item_des">主页</span>
+            </a>
+        </div>
+        <div class="menu_item">
+            <a class="item_a" href="blog/index.html">
+                <h2 class="item_name">Blogs</h2>
+                <span class="item_des">博客</span>
+            </a>
+        </div>
+        <div class="menu_item">
+            <a class="item_a" href="#">
+                <h2 class="item_name">Apps</h2>
+                <span class="item_des">软件</span>
+            </a>
+        </div>
+    <div class="menu_item">
+        <a class="item_a" href="#">
+            <h2 class="item_name">Navi</h2>
+            <span class="item_des">导航</span>
+        </a>
+    </div>
+        <div class="menu_item">
+            <a class="item_a" href="about/index.html">
+                <h2 class="item_name">About</h2>
+                <span class="item_des">关于</span>
+            </a>
+        </div>
+</div>
+
+<script>
+
+    function startOneWord() {
+        // 获取一言标签
+        let oneWords = document.querySelectorAll(".one_word");
+        // 循环访问每个标签
+        oneWords.forEach(function (oneWord) {
+            // 分割每一个字符
+            let letters = oneWord.textContent.split("");
+            // 设置标签内容为空
+            oneWord.textContent = "";
+            // 便利每个字添加字标签，每个标签都会执行指定动画，让字符动起来
+            letters.forEach(function (letter, i) {
+                let span = document.createElement("span");
+                // span.innerHTML = (letter === ' ') ? "&nbsp;" : letter;
+                span.textContent = letter;
+                // 延迟执行动画，字符出现顺序不一样，执行动画需要延迟
+                span.style.animationDelay = i * 0.04 + "s";
+                oneWord.append(span);
+            });
+        });
+    }
+    startOneWord();
+</script>
+
+</body>
+</html>
