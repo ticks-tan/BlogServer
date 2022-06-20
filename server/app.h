@@ -67,6 +67,10 @@ class BlogApp final
 public:
     // 构造函数
     BlogApp();
+    ~BlogApp()
+    {
+        hv::async::cleanup();
+    }
 
     __attribute__((unused)) explicit BlogApp(const std::string& config_file);
     // 加载配置文件

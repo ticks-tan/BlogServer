@@ -3,11 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <title>Ticks的博客-测试</title>
+    <script src="../js/blog_index.js"></script>
 </head>
 
 <style>
     body{
-        background: #ffffff;
+        height: 100%;
+        width: 100%;
+        top: 0;
+        left: 0;
+        border: none;
+    }
+    body::before{
+        content: "";
+        position: absolute;
+        background: url("https://w.wallhaven.cc/full/l3/wallhaven-l3182l.jpg") no-repeat;
+        background-size: cover;
+        left: 0;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        margin: -7px;
+        filter: blur(7px);
+    }
+
+    .main_app{
+        position: absolute;
+        height: 100%;
+        width: 100%;
+        top: 0;
+        left: 0;
+        overflow: hidden;
+        overflow-y: visible;
+        border: none;
     }
 
     .app_title{
@@ -23,6 +51,7 @@
         display: flex;
         justify-content: center;
         align-items: center;
+        opacity: 0.5;
     }
     .search_bar{
         position: relative;
@@ -65,6 +94,7 @@
         transition: transform .3s;
     }
 
+
     .blogs_box{
         position: relative;
         width: 60%;
@@ -85,6 +115,8 @@
         background: #eeeeee;
         padding: 10px;
         border-radius: 8px;
+        opacity: 0.5;
+        font-weight: bold;
     }
     .blog_item:hover{
         cursor: pointer;
@@ -96,8 +128,22 @@
         text-overflow: ellipsis;
         padding-left: 10px;
     }
+
+    .blog_item_bottom{
+        margin-bottom: 10px;
+        margin-top: 10px;
+    }
+    .blog_tag_div{
+        float: left;
+        margin-left: 10px;
+    }
+    .blog_tag{
+        color: #0c9a9a;
+        margin-left: 1rem;
+        margin-right: 1rem;
+    }
     .blog_date{
-        text-align: end;
+        float: right;
         padding-right: 10px;
     }
 
@@ -138,12 +184,60 @@
         }
     }
 
+    #toast_box{
+        position: fixed;
+        width: fit-content;
+        min-height: 20px;
+        padding: 7px;
+        top: 10%;
+        right: -8%;
+        z-index: 999;
+        border-radius: 3px;
+        background: white;
+        opacity: .6;
+        color: #0b1c2c;
+    }
+
+    @keyframes toastAnimation {
+        0%{right: -4%;}
+        10%{right: 0}
+        20%{right: 1%}
+        30%{right: 1%}
+        40%{right: 1%}
+        50%{right: 1%}
+        60%{right: 1%}
+        70%{right: 1%}
+        80%{right: 1%}
+        90%{right: 0}
+        100%{right: -4%}
+    }
+
+    #blog_user{
+        position: fixed;
+        width: 60px;
+        height: 60px;
+        border-radius: 30px;
+        top: 10%;
+        right: 2%;
+        background: #0c9a9a;
+        z-index: 999;
+    }
+    #blog_user:hover{
+        cursor: pointer;
+        opacity: .6;
+    }
+    #blog_user img{
+        width: 100%;
+        height: 100%;
+    }
 </style>
 
 <body>
-
+<div id="toast_box"></div>
+<div id="blog_user">
+    <img src="../imgs/avatar.png" alt="">
+</div>
 <div class="main_app">
-    <div>
         <h1 class="app_title"><a href="../index.html" style="text-decoration: none;color: black">Ticks</a></h1>
         <p class="app_title_des">哎，又是没有写博客的一天-_-</p>
         <div class="search_box">
@@ -152,76 +246,39 @@
                 <label class="search_label">搜索</label>
             </div>
         </div>
-        <div class="blogs_box">
+        <div id="blogs_box_id" class="blogs_box">
             <div class="blog_item">
-                <h3 class="blog_title" title="Mysql简单使用">Mysql简单使用</h3>
-                <h5 class="blog_date">2022-6-12 23:23:23</h5>
+                <h3 class="blog_title blog_item_top" title="Mysql简单使用">Mysql简单使用</h3>
+                <div class="blog_item_bottom">
+                    <div class="blog_tag_div">
+                        <span class="blog_tag">Mysql</span>
+                        <span class="blog_tag">教程</span>
+                    </div>
+                    <div class="blog_date">2022-6-12 23:23:23</div>
+                </div>
             </div>
             <div class="blog_item">
-                <h3 class="blog_title" title="关于C++中的auto用法">关于C++中的auto用法</h3>
-                <h5 class="blog_date">2022-6-12 23:23:23</h5>
-            </div>
-            <div class="blog_item">
-                <h3 class="blog_title" title="ArchLinux安装MariaDB">ArchLinux安装MariaDB</h3>
-                <h5 class="blog_date">2022-6-12 23:23:23</h5>
-            </div>
-            <div class="blog_item">
-                <h3 class="blog_title" title="Linux C语言Exec系列函数介绍">Linux C语言Exec系列函数介绍</h3>
-                <h5 class="blog_date">2022-6-12 23:23:23</h5>
+                <h3 class="blog_title blog_item_top" title="Mysql简单使用">Mysql简单使用</h3>
+                <div class="blog_item_bottom">
+                    <div class="blog_tag_div">
+                        <span class="blog_tag">Mysql</span>
+                        <span class="blog_tag">教程</span>
+                    </div>
+                    <div class="blog_date">2022-6-12 23:23:23</div>
+                </div>
             </div>
             <p class="blog_item" id="load_more">点击加载更多</p>
         </div>
-    </div>
 </div>
 
 <script>
 
-    // 加载更多
-    class MyLoadMore{
-        constructor(load_more) {
-            this.run = false;
-            this.loadMore = load_more;
-            this.timeId = 0;
-            this.letters = ['⬤','⬤','⬤','⬤','⬤','⬤','⬤'];
-        }
-
-        // 开始加载
-        startLoadMore(){
-            this.run = true;
-            this.start();
-        }
-        // 开始动画
-        start(){
-            let this_ = this;
-            this.loadMore.innerHTML = "";
-            for (let i = 0; i < this.letters.length; ++i) {
-                let span = document.createElement("span");
-                span.textContent = this.letters[i];
-                span.style.animationDelay = i * 0.1 + "s";
-                this.loadMore.append(span);
-            }
-            if (this_.run === true) {
-                this_.timeId = setTimeout(function () {
-                    this_.start();
-                }, 2000);
-            }
-        }
-        // 停止加载
-        stopLoadMore(){
-            this.run = false;
-            clearTimeout(this.timeId);
-            this.loadMore.innerHTML = "点击加载更多";
-        }
-    }
-
     let load_more = document.getElementById("load_more");
     let loadMore = new MyLoadMore(load_more);
+    let blogManager = new Blogs("blogs_box_id");
 
     load_more.onclick = function (){
-        loadMore.startLoadMore();
-        setTimeout(function (){
-            loadMore.stopLoadMore();
-        }, 5000);
+        blogManager.getNewBlog(loadMore);
     }
 
 </script>

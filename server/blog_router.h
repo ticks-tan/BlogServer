@@ -121,7 +121,7 @@ static int getPageArticlesInfo(BlogApp* app, const HttpContextPtr& ptr)
                 json["message"] = "server database not found";
                 return ptr->sendJson(json);
             }
-            pageStr = "select * from blogs order by update_date desc limit "
+            pageStr = "select * from blogs order by updateDate desc limit "
                     + std::to_string(15 * (page - 1)) + "," + std::to_string(15 * page);
             auto statement = con->createStatement();
             auto result(statement->executeQuery(sql::SQLString(pageStr.data())));
@@ -134,8 +134,8 @@ static int getPageArticlesInfo(BlogApp* app, const HttpContextPtr& ptr)
                 article["title"] = result->getString(2).c_str();
                 article["author"] = result->getString(3).c_str();
                 article["tags"] = result->getString(4).c_str();
-                article["upload_date"] = result->getLong(5);
-                article["update_date"] = result->getLong(6);
+                article["uploadDate"] = result->getLong(5);
+                article["updateDate"] = result->getLong(6);
                 json["articles"].push_back(article);
             }
             return ptr->sendJson(json);
@@ -222,7 +222,7 @@ static int searchBlogArticle(BlogApp* app, const HttpContextPtr& ptr)
                 json["message"] = "server database not found";
                 return ptr->sendJson(json);
             }
-            std::string queryStr = "select * from blogs where title like '%"+ key +"%' or find_in_set(?,tags) order by update_date desc";
+            std::string queryStr = "select * from blogs where title like '%"+ key +"%' or find_in_set(?,tags) order by updateDate desc";
             auto stmnt(conn->prepareStatement(queryStr.c_str()));
             stmnt->setString(1, key);
             auto result = stmnt->executeQuery();
@@ -234,8 +234,8 @@ static int searchBlogArticle(BlogApp* app, const HttpContextPtr& ptr)
                 article["title"] = result->getString(2).c_str();
                 article["author"] = result->getString(3).c_str();
                 article["tags"] = result->getString(4).c_str();
-                article["upload_date"] = result->getLong(5);
-                article["update_date"] = result->getLong(6);
+                article["uploadDate"] = result->getLong(5);
+                article["updateDate"] = result->getLong(6);
                 json["articles"].push_back(article);
             }
             return ptr->sendJson(json);
@@ -308,7 +308,7 @@ static int uploadBlogArticle(BlogApp* app, const HttpContextPtr& ptr)
                 ptr->writer->End();
                 return HTTP_STATUS_UNFINISHED;
             }
-            std::string tmpStr = "select * from user where username=? and md5_password=? limit 0,1";
+            std::string tmpStr = "select * from user where userName=? and userPassword=? limit 0,1";
             auto preStmt(conn->prepareStatement(tmpStr.c_str()));
             preStmt->setString(1, user);
             preStmt->setString(2, passwd);
@@ -330,7 +330,7 @@ static int uploadBlogArticle(BlogApp* app, const HttpContextPtr& ptr)
             hv_md5((unsigned char*)id.data(), id.size(), id_);
             id = (char*)id_;
 
-            tmpStr = "insert into blogs (id, title, author, tags, upload_date, update_date) values (?,?,?,?,?,?)";
+            tmpStr = "insert into blogs (id, title, author, tags, uploadDate, updateDate) values (?,?,?,?,?,?)";
             auto preStmt1(conn->prepareStatement(tmpStr.c_str()));
             preStmt1->setString(1, id);
             preStmt1->setString(2, title);
@@ -339,7 +339,13 @@ static int uploadBlogArticle(BlogApp* app, const HttpContextPtr& ptr)
             preStmt1->setLong(5, now_time);
             preStmt1->setLong(6, now_time);
 
-            if (preStmt1->executeUpdate() == 1){
+            if (preStmt1->executeUpdate() > 0){
+                // 保存博客文章
+                std::string file_path = app->getConfig().webHome + "/blog_files/" + id + ".md";
+                HFile file;
+                if (file.open(file_path.c_str(), "w+")){
+                    file.write(iter->second.content);
+                }
                 json["code"] = 200;
                 json["message"] = "article upload success";
                 ptr->writer->WriteStatus(HTTP_STATUS_OK);
@@ -366,6 +372,76 @@ static int uploadBlogArticle(BlogApp* app, const HttpContextPtr& ptr)
         }
     });
     return ret.get();
+}
+
+static int firstInitBlogConfig(BlogApp* app, http_server_t* server, bool hasDB, const HttpContextPtr& ptr)
+{
+    hv::Json json;
+    ptr->request->ParseBody();
+
+    std::string nick_name = ptr->form("nickName", "");
+    std::string user_name = ptr->form("userName", "");
+    std::string user_passwd = ptr->form("userPassword", "");
+    std::string user_note = ptr->form("userNote", "");
+    std::string user_email = ptr->form("userEmail", "");
+
+    if (nick_name.empty() || user_name.empty() || user_passwd.empty() || user_note.empty() || user_email.empty()){
+        json["code"] = 500;
+        json["message"] = "request param loss";
+        return ptr->sendJson(json);
+    }
+    try{
+        auto conn = app->getDBConnection();
+        std::string dbStr = "create table if not exists user("
+                            "nickName varchar(30) not null,"
+                            "userName varchar(30) not null,"
+                            "userPassword varchar(30) not null,"
+                            "userEmail varchar(20) not null,"
+                            "userNote varchar(128) not null,"
+                            "primary key(userName)"
+                            ")default charset=utf8";
+        std::string dbStr1 = "create table if not exists blogs("
+                             "id varchar(32) not null,"
+                             "title varchar(32) not null,"
+                             "author varchar(32) not null,"
+                             "tags varchar(32) not null,"
+                             "uploadDate long not null,"
+                             "updateDate long not null,"
+                             "primary key(id)"
+                             ")default charset=utf8";
+            // 创建数据库
+        auto stmt(conn->createStatement());
+        if (hasDB || (stmt->execute(dbStr) == 0 && stmt->execute(dbStr1) == 0)){
+            // 插入数据
+            dbStr = "insert into user (nickName, userName, userPassword, userEmail, userNote) values (?, ?, ?, ?, ?)";
+            auto pre_stmt(conn->prepareStatement(dbStr));
+            pre_stmt->setString(1, nick_name);
+            pre_stmt->setString(2, user_name);
+            pre_stmt->setString(3, user_passwd);
+            pre_stmt->setString(4, user_email);
+            pre_stmt->setString(5, user_note);
+            if (pre_stmt->executeUpdate() > 0){
+                json["code"] = 200;
+                json["message"] = "server database init success";
+            }else{
+                json["code"] = 500;
+                json["message"] = "insert user info error";
+                return ptr->sendJson(json);
+            }
+        } else{
+            json["code"] = 500;
+            json["message"] = "server database create error";
+            return ptr->sendJson(json);
+        }
+    }catch (sql::SQLException& exp){
+        std::cout << exp.what() << std::endl;
+        json["code"] = 500;
+        json["message"] = "server database init error";
+        return ptr->sendJson(json);
+    }
+
+    http_server_stop(server);
+    return ptr->sendJson(json);
 }
 
 #endif // __BLOG_SERVER_BLOG_ROUTER_H__

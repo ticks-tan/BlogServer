@@ -1,4 +1,4 @@
-/**
+/****
 * @Copyright(C) 2022.
 *
 * @filename: app.cc
@@ -6,8 +6,8 @@
 * @author: Ticks
 * @description: 
 *
-* If you have contact or bugs, you can email to me, I can help you.
-**/
+*
+****/
 
 #include "blog_router.h"
 #include "app.h"
@@ -31,6 +31,7 @@ BlogApp::BlogApp(const std::string &config_file)
     this->_error = false;
 }
 
+// 加载配置文件
 bool BlogApp::loadConfig(const std::string &config_file)
 {
     if (config_file.empty()){
@@ -40,6 +41,7 @@ bool BlogApp::loadConfig(const std::string &config_file)
     return this->checkConfig();
 }
 
+// 初始化服务
 void BlogApp::initServer()
 {
     this->_server.service = &this->_router;
@@ -101,6 +103,7 @@ void BlogApp::initServer()
     }
 }
 
+//  正式运行
 bool BlogApp::run()
 {
     initDBPool();
@@ -118,6 +121,7 @@ bool BlogApp::run()
     return true;
 }
 
+// 检查配置文件
 bool BlogApp::checkConfig()
 {
     if (this->_config.configFile.empty()){
@@ -261,6 +265,7 @@ bool BlogApp::checkConfig()
     return true;
 }
 
+// 加载默认配置文件
 void BlogApp::loadDefaultConfig()
 {
     this->_config.execCount = 0;
@@ -315,19 +320,22 @@ bool BlogApp::initDBPool()
     return false;
 }
 
+// Router 配置
 void BlogApp::initBlogRouter()
 {
-    // 拦截浏览器直接访问博客文件
+    // 拦截浏览器请求
     this->_router.Any("/blog_files", &interceptWebBlogFile);
     this->_router.Any("/blog_files/*", &interceptWebBlogFile);
+    this->_router.Any("/first_configure", &interceptWebBlogFile);
+    this->_router.Any("/first_configure/*", &interceptWebBlogFile);
     // 获取一页博客信息
-    this->_router.GET("/blog/articles", std::bind(&getPageArticlesInfo, this, std::placeholders::_1));
+    this->_router.GET("/api/blog/articles", std::bind(&getPageArticlesInfo, this, std::placeholders::_1));
     // 获取一篇文章
-    this->_router.GET("/blog/article", std::bind(&getBlogArticleContent, this, std::placeholders::_1, std::placeholders::_2));
+    this->_router.GET("/api/blog/article", std::bind(&getBlogArticleContent, this, std::placeholders::_1, std::placeholders::_2));
     // 查询博客
-    this->_router.GET("/blog/search", std::bind(&searchBlogArticle, this, std::placeholders::_1));
+    this->_router.GET("/api/blog/search", std::bind(&searchBlogArticle, this, std::placeholders::_1));
     // 上传博客
-    this->_router.POST("/blog/post/article", std::bind(&uploadBlogArticle, this, std::placeholders::_1));
+    this->_router.POST("/api/blog/post/article", std::bind(&uploadBlogArticle, this, std::placeholders::_1));
 }
 
 bool BlogApp::checkFirstConfig()
@@ -337,29 +345,32 @@ bool BlogApp::checkFirstConfig()
         return false;
     }
     try {
-        std::string queryStr = "select * from user limit 0,1";
+        std::string queryStr = "show tables;";
         auto stmt(conn->createStatement());
         auto result = stmt->executeQuery(queryStr.c_str());
-        if (result->getRow() > 0){
+        if (result->rowsCount() >= 2){
+            return true;
+        }else{
+            std::cout << "数据库未初始化，启动初始化网站，监听地址：127.0.0.1:" << this->_config.initConfigPort << "\n";
+            http_server_t config_server;
+            config_server.http_version = 1;
+            if (this->_config.enableSSL){
+                config_server.https_port = this->_config.initConfigPort;
+            } else{
+                config_server.port = this->_config.initConfigPort;
+            }
+            config_server.worker_threads = 1;
+
+            HttpService service1;
+            config_server.service = &service1;
+            service1.document_root = this->_config.webHome + "/first_configure";
+            service1.home_page = "index.html";
+            service1.error_page = "404.html";
+            service1.POST("/api/blog/init/config", std::bind(&firstInitBlogConfig, this, &config_server, false, std::placeholders::_1));
+            http_server_run(&config_server);
+            std::cout << "初始化完成，正在启动网站\n";
             return true;
         }
-        http_server_t config_server;
-        config_server.http_version = 1;
-        if (this->_config.enableSSL){
-            config_server.https_port = this->_config.initConfigPort;
-        } else{
-            config_server.port = this->_config.initConfigPort;
-        }
-        config_server.worker_threads = 1;
-        HttpService service1;
-        service1.POST("/blog/init/config", [&config_server](const HttpContextPtr& ptr) -> int {
-
-            http_server_stop(&config_server);
-            return 200;
-        });
-        config_server.service = &service1;
-        http_server_run(&config_server);
-        return true;
     }catch (sql::SQLException& exp){
         std::cout << exp.what() << std::endl;
         return false;
