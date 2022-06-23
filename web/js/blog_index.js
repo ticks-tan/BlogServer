@@ -1,9 +1,3 @@
-/*
-<div class="blog_item">
-    <h3 class="blog_title" title="Mysql简单使用">Mysql简单使用</h3>
-    <h5 class="blog_date">2022-6-12 23:23:23</h5>
-</div>
- */
 
 class UrlManager
 {
@@ -13,53 +7,32 @@ class UrlManager
     }
 }
 
-function toastMessage(msg){
-    let toast = document.getElementById("toast_box");
-    toast.innerText = msg;
-    toast.style.animation = "toastAnimation 4s linear";
-    toast.addEventListener("animationend", function (){
-        toast.style.animation = "";
-    });
-}
-
-// 加载更多
-class MyLoadMore{
-    constructor(load_more) {
-        this.run = false;
-        this.loadMore = load_more;
-        this.timeId = 0;
-        this.letters = ['⬤','⬤','⬤','⬤','⬤','⬤','⬤'];
+class BlogErrorItem
+{
+    constructor(msg) {
+        this.msg = msg;
     }
 
-    // 开始加载
-    startLoadMore(){
-        this.run = true;
-        this.start();
-    }
-    // 开始动画
-    start(){
-        let this_ = this;
-        this.loadMore.innerHTML = "";
-        for (let i = 0; i < this.letters.length; ++i) {
-            let span = document.createElement("span");
-            span.textContent = this.letters[i];
-            span.style.animationDelay = i * 0.1 + "s";
-            this.loadMore.append(span);
-        }
-        if (this_.run === true) {
-            this_.timeId = setTimeout(function () {
-                this_.start();
-            }, 2000);
-        }
-    }
-    // 停止加载
-    stopLoadMore(){
-        this.run = false;
-        clearTimeout(this.timeId);
-        this.loadMore.innerHTML = "点击加载更多";
+    createNode(){
+        let box = document.createElement("div");
+        box.classList.add("blog_error_item");
+        box.innerText = this.msg;
+        return box;
     }
 }
 
+/*
+<div className="blog_item">
+    <h3 className="blog_title blog_item_top" title="Mysql简单使用">Mysql简单使用</h3>
+    <div className="blog_item_bottom">
+        <div className="blog_tag_div">
+            <span className="blog_tag">Mysql</span>
+            <span className="blog_tag">教程</span>
+        </div>
+        <div className="blog_date">2022-6-12 23:23:23</div>
+    </div>
+</div>
+ */
 class BlogItem
 {
     constructor(id, title, tags, date) {
@@ -72,123 +45,124 @@ class BlogItem
         // 标签
         this.blogTags = tags;
     }
-
     // 创建节点
     createNode()
     {
         let box = document.createElement("div");
         box.classList.add("blog_item");
-        box.blog_id = this.blogId;
+        box.setAttribute("blog_id", this.blogId);
 
         let h3 = document.createElement("h3");
         h3.classList.add("blog_title");
+        h3.classList.add("blog_item_top");
         h3.title = this.blogTitle;
         h3.innerText = this.blogTitle;
 
-        let h5 = document.createElement("h5");
-        h5.classList.add("blog_date");
-        h5.innerText = this.blogDate;
+        let div = document.createElement("div");
+        div.classList.add("blog_item_bottom");
+        let div1 = document.createElement("div");
+        div1.classList.add("blog_tag_div");
+        let tags = this.blogTags.split(',');
+        for (let i = 0; i < tags.length; ++i){
+            let span = document.createElement("span");
+            span.classList.add("blog_tag");
+            span.innerText = tags.at(i);
+            div1.append(span);
+        }
 
+        let date = document.createElement("div");
+        date.classList.add("blog_date");
+        date.innerText = this.blogDate;
+
+        div.append(div1);
+        div.append(date);
         box.append(h3);
-        box.append(h5);
+        box.append(div);
+
+        box.addEventListener("click", function (){
+            $.ajax({
+                url: "/api/blog/article?id=" + box.getAttribute("blog_id"),
+                type: "GET",
+                success: function (res){
+                    $("#main_app").hide();
+                    $("#blog_detail_box").append(MD.makeHtml(myDecodeString(res)));
+                },
+                error: function (){
+                    alert("获取失败");
+                }
+            })
+        })
 
         return box;
     }
 }
 
-// Http请求客户端
-class HttpClient
+function getBlogs(pageObj, blogBox)
 {
-    constructor() {
-    }
-
-    GET(url, okCall, errorCall = null){
-        const http = new XMLHttpRequest();
-        http.open("GET", url);
-        http.send();
-        http.onreadystatechange = function(){
-            if (this.readyState === 4){
-                if (this.status === 200 && okCall){
-                    okCall(http.responseText);
-                }else {
-                    if (errorCall){
-                        errorCall();
-                    }
+    $.ajax({
+        url: UrlManager.getNewBlogs + "?page=" + pageObj.config.pageIndex,
+        type: 'GET',
+        dataType: 'json',
+        success: function(res){
+            blogBox.empty();
+            if (parseInt(res.code) === 200){
+                pageObj.config.total = parseInt(res.count);
+                let json = res["articles"];
+                if (json && json instanceof Array){
+                    json.forEach(function (val, index,array){
+                        let blogItem = new BlogItem(val.id, val.title, val.tags,
+                            new Date(parseInt(val["updateDate"]) * 1000).toLocaleString());
+                        blogBox.append(blogItem.createNode());
+                    })
                 }
+            }else {
+                // 添加错误信息
+                blogBox.append(new BlogErrorItem(res["message"]).createNode());
             }
+            pageObj.pageHtml();
+        },
+        error: function(){
+            console.log("获取失败");
+            blogBox.empty();
+            // 添加错误信息
+            blogBox.append(new BlogErrorItem("获取信息失败").createNode());
+            pageObj.pageHtml();
         }
-    }
+    });
 }
 
-class Blogs
+
+ChMap = [
+    ['0', 'A'], ['1', 'B'],
+    ['2', 'C'], ['3', 'D'],
+    ['4', 'E'], ['5', 'F'],
+    ['6', 'G'], ['7', 'H'],
+    ['8', 'I'], ['9', 'J']
+];
+
+IndexMap = [
+    ['0', 'K'], ['1', 'L'],
+    ['2', 'M'], ['3', 'N'],
+    ['4', 'O'], ['5', 'P'],
+    ['6', 'Q'], ['7', 'R'],
+    ['8', 'S'], ['9', 'T']
+];
+
+function myDecodeString(data)
 {
-    constructor(boxId) {
-        this.blogBox = document.getElementById(boxId);
-        this.page = 1;
-        this.blogArray = [];
-        this.searchBlogArray = [];
+    let tmp = "", num = "", decode = "";
+    let index = 0;
+    let last = 0, it = data.indexOf(IndexMap[index][1]);
+    while (it !== -1){
+        tmp = data.slice(last, it);
+        for (let i = 0; i < tmp.length; ++i){
+            num += ChMap[tmp.charCodeAt(i) - 'A'.charCodeAt(0)][0];
+        }
+        decode += String.fromCharCode(parseInt(num));
+        num = "";
+        last = it + 1;
+        index = (index + 1) % 10;
+        it = data.indexOf(IndexMap[index][1], last);
     }
-
-    // 获取博客
-    getNewBlog(loadMore) {
-        let httpClient = new HttpClient();
-        loadMore.startLoadMore();
-        let this_ = this;
-        httpClient.GET( UrlManager.getNewBlogs + "?page=" + this.page, function (content){
-            let json = JSON.parse(content);
-            if (json){
-                if (json["code"] === 200){
-                    // 成功
-                    let blogs = json["articles"];
-                    if (blogs && blogs.isArray){
-                        for (let i = 0; i < blogs.length; ++i){
-                            let blog = blogs[i];
-                            if (blog){
-                                this_.blogArray.append(
-                                    new BlogItem(blog["id"], blog["title"], blog["tags"], blog["updateDate"])
-                                );
-                            }
-                        }
-                    }
-                }
-            }
-            ++this_.page;
-            loadMore.stopLoadMore();
-            // 更新文章
-
-        }, function (){
-            toastMessage("获取博客失败");
-            loadMore.stopLoadMore();
-        });
-    }
-
-
-    // 搜索博客
-    searchBlog(searchInput) {
-        let httpClient = new HttpClient();
-        let this_ = this;
-
-        httpClient.GET(UrlManager.searchBlog + "?key=" + searchInput.value, function (content) {
-            this_.searchBlogArray = [];
-            let json = JSON.parse(content);
-            if (json){
-                if (json["code"] === 200){
-                    let blogs = json["articles"];
-                    if (blogs && blogs.isArray){
-                        for (let i = 0; i < blogs.length; ++i){
-                            let blog = blogs[i];
-                            if (blog){
-                                this_.searchBlogArray.append(
-                                    new BlogItem(blog["id"], blog["title"], blog["tags"], blog["update_date"])
-                                );
-                            }
-                        }
-                    }
-                }
-            }
-            // 显示文章
-        }, function () {
-            // 请求出错
-        });
-    }
+    return decode.toString();
 }

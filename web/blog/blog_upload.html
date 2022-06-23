@@ -47,32 +47,6 @@
         line-height: 40px;
     }
 
-    .selectFile{
-        position: relative;
-        display: inline-block;
-        background: #D0EEFF;
-        border: 1px solid #99D3F5;
-        border-radius: 4px;
-        padding: 4px 12px;
-        overflow: hidden;
-        color: #1E88C7;
-        text-decoration: none;
-        text-indent: 0;
-        line-height: 30px;
-    }
-    #articleId{
-        position: absolute;
-        top: 0;
-        right: 0;
-        opacity: 0;
-    }
-
-    .fileError{
-
-    }
-    .fileNone{
-
-    }
 
     #submitId,#resetId{
         border: none;
@@ -88,10 +62,10 @@
 </style>
 <body>
 
-<h1 style="text-align: center">博客上传界面</h1>
+<h1 style="text-align: center">博客上传</h1>
 <hr>
 <div id="config_box">
-    <form id="config_form" action="/api/blog/upload/article"
+    <form id="config_form" action="/api/blog/post/article"
           enctype="multipart/form-data" method="post" onsubmit="return checkSubmit();">
         <ul>
             <li>
@@ -111,16 +85,13 @@
             </li>
             <li>
                 <label>博客标签(逗号分割): </label>
-                <input type="text" id="tagId"
+                <input type="text" id="tagId" name="tags"
                        onfocusin="checkBlogTag()" onfocusout="checkBlogTag()" required/>
             </li>
             <li>
                 <label>选择博客文件: </label>
-                <a href="javascript:;" class="selectFile">选择文件
-                    <input type="file" name="article" id="articleId" autocomplete="off"
+                <input type="file" accept=".md" name="article" id="articleId" autocomplete="off"
                        onfocusin="checkEmail()" onfocusout="checkEmail()" required/>
-                </a>
-                <span id="fileMsgId"></span>
             </li>
             <li class="submit_li">
                 <button id="submitId" type="submit">上传</button>

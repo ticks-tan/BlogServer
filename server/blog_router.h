@@ -107,7 +107,8 @@ static int getPageArticlesInfo(BlogApp* app, const HttpContextPtr& ptr)
     if (pageStr.empty()){
         // 请求参数无效
         json["code"] = 500;
-        json["message"] = "request param loss";
+        json["count"] = 0;
+        json["message"] = "请求参数无效";
         return ptr->sendJson(json);
     }
     int page = std::stoi(pageStr);
@@ -118,13 +119,25 @@ static int getPageArticlesInfo(BlogApp* app, const HttpContextPtr& ptr)
             auto con = app->getDBConnection();
             if (con.get() == nullptr){
                 json["code"] = 500;
-                json["message"] = "server database not found";
+                json["count"] = 0;
+                json["message"] = "数据库繁忙";
                 return ptr->sendJson(json);
             }
+            pageStr = "select count(*) from blogs";
+            auto stmt(con->createStatement());
+            auto res = stmt->executeQuery(pageStr);
+            if (!res->next()){
+                json["code"] = 500;
+                json["count"] = 0;
+                json["message"] = "数据库繁忙";
+                return ptr->sendJson(json);
+            }
+            json["count"] = res->getLong("count(*)");
+
             pageStr = "select * from blogs order by updateDate desc limit "
-                    + std::to_string(15 * (page - 1)) + "," + std::to_string(15 * page);
+                    + std::to_string(10 * (page - 1)) + "," + std::to_string(10 * page);
             auto statement = con->createStatement();
-            auto result(statement->executeQuery(sql::SQLString(pageStr.data())));
+            auto result(statement->executeQuery(pageStr.data()));
 
             json["code"] = 200;
             hv::Json article;
@@ -143,7 +156,8 @@ static int getPageArticlesInfo(BlogApp* app, const HttpContextPtr& ptr)
             // 日至记录
             LOGW("%s", exp.what());
             json["code"] = 500;
-            json["message"] = "server database error";
+            json["count"] = 0;
+            json["message"] = "数据库错误";
             return ptr->sendJson(json);
         }catch (hv::Json::exception& exp){
             LOGW("%s", exp.what());
@@ -151,7 +165,8 @@ static int getPageArticlesInfo(BlogApp* app, const HttpContextPtr& ptr)
         }
     }
     json["code"] = 500;
-    json["message"] = "request param error";
+    json["count"] = 0;
+    json["message"] = "请求参数错误";
     return ptr->sendJson(json);
 }
 
@@ -206,12 +221,7 @@ static int getBlogArticleContent(BlogApp* app, const HttpRequestPtr& req, const 
 static int searchBlogArticle(BlogApp* app, const HttpContextPtr& ptr)
 {
     hv::Json json;
-    if (ptr->request->method != HTTP_GET){
-        json["code"] = 500;
-        json["message"] = "request method error";
-        return ptr->sendJson(json);
-    }
-
+    // 解析请求Url
     ptr->request->ParseUrl();
     std::string key = ptr->param("key", "");
     if (!key.empty()){
@@ -222,9 +232,11 @@ static int searchBlogArticle(BlogApp* app, const HttpContextPtr& ptr)
                 json["message"] = "server database not found";
                 return ptr->sendJson(json);
             }
-            std::string queryStr = "select * from blogs where title like '%"+ key +"%' or find_in_set(?,tags) order by updateDate desc";
+            std::string queryStr = "select * from blogs where title like '%"
+                                    + key +"%' or find_in_set(?,tags) order by updateDate desc";
             auto stmnt(conn->prepareStatement(queryStr.c_str()));
             stmnt->setString(1, key);
+            // 查询数据库
             auto result = stmnt->executeQuery();
 
             json["code"] = 200;
@@ -312,8 +324,9 @@ static int uploadBlogArticle(BlogApp* app, const HttpContextPtr& ptr)
             auto preStmt(conn->prepareStatement(tmpStr.c_str()));
             preStmt->setString(1, user);
             preStmt->setString(2, passwd);
+            // 查询数据库
             auto result = preStmt->executeQuery();
-            if (result->getRow() == 0){
+            if (!result->next()){
                 // 用户未找到
                 json["code"] = 500;
                 json["message"] = "username or password error";
@@ -323,27 +336,34 @@ static int uploadBlogArticle(BlogApp* app, const HttpContextPtr& ptr)
                 ptr->writer->End();
                 return HTTP_STATUS_UNFINISHED;
             }
+            std::string nick_name = result->getString(2).c_str();
             // 插入文章
+            // 文章ID处理
             long now_time = std::time(nullptr);
             std::string id = title + std::to_string(now_time);
-            unsigned char id_[16];
-            hv_md5((unsigned char*)id.data(), id.size(), id_);
-            id = (char*)id_;
-
+            char id_[33];
+            hv_md5_hex((unsigned char*)id.data(), id.size(), id_, 33);
+            id = id_;
+            // 数据库插入命令
             tmpStr = "insert into blogs (id, title, author, tags, uploadDate, updateDate) values (?,?,?,?,?,?)";
-            auto preStmt1(conn->prepareStatement(tmpStr.c_str()));
+            auto preStmt1(conn->prepareStatement(tmpStr.data()));
+            // 设置各个参数
             preStmt1->setString(1, id);
             preStmt1->setString(2, title);
-            preStmt1->setString(3, result->getString("nickname"));
+            preStmt1->setString(3, nick_name);
             preStmt1->setString(4, tags);
             preStmt1->setLong(5, now_time);
             preStmt1->setLong(6, now_time);
 
             if (preStmt1->executeUpdate() > 0){
                 // 保存博客文章
-                std::string file_path = app->getConfig().webHome + "/blog_files/" + id + ".md";
+                std::string file_path = app->getConfig().webHome + "/blog_files/";
+                if (!HPath::exists(file_path.data())){
+                    hv_mkdir_p(file_path.data());
+                }
+                file_path += id + ".md";
                 HFile file;
-                if (file.open(file_path.c_str(), "w+")){
+                if (file.open(file_path.c_str(), "w") == 0){
                     file.write(iter->second.content);
                 }
                 json["code"] = 200;
@@ -362,6 +382,7 @@ static int uploadBlogArticle(BlogApp* app, const HttpContextPtr& ptr)
             ptr->writer->End();
             return HTTP_STATUS_UNFINISHED;
         }catch (sql::SQLException& exp){
+            LOGW("%s", exp.what());
             json["code"] = 500;
             json["message"] = "server database error";
             ptr->writer->WriteStatus(HTTP_STATUS_OK);
