@@ -1,0 +1,39 @@
+#blog_detail_page{
+    width: 100%;
+    background: #fafaff;
+}
+
+.blog_style_box{
+    padding: 10px;
+}
+
+.blog_style_box strong{
+    color: #7e5ce6;
+}
+
+.blog_style_box img{
+    width: 100%;
+    margin: 10px;
+    border-radius: 10px;
+}
+
+.blog_style_box pre{
+    width: 100%;
+    margin: 10px;
+    padding: 10px;
+}
+
+.blog_style_box pre code{
+    min-height: 20px;
+    padding: 10px;
+    text-align: left;
+    background: #f5f5ff;
+}
+
+.blog_style_box p code{
+    color: #3ec2c6;
+}
+
+.blog_style_box h1,h2,h3,h4,h5{
+    color: #0f9cfd;
+}

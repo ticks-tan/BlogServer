@@ -3,55 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <title>Ticks的博客-测试</title>
-    <link rel="stylesheet" href="../css/blog_index.css">
-    <link rel="stylesheet" href="../lib/highlight/styles/default.min.css">
+    <link rel="stylesheet" href="../css/blog/blog_index.css">
+    <link rel="stylesheet" href="../css/highlight/styles/atom-one-light.min.css">
+    <link rel="stylesheet" href="../css/blog/blog_style_light.css">
+    <link rel="stylesheet" href="../css/katex/katex.min.css">
 </head>
-
 <body>
 <!-- 主界面 -->
-<div id="main_app">
-    <h1 class="main_app_title"><a href="../index.html" style="text-decoration: none;color: black">Ticks</a></h1>
-    <p class="main_app_one_word">哎，又是没有写博客的一天-_-</p>
+<div id="blog_home_page">
+    <h1 class="home_page_title"><a href="../index.html" style="text-decoration: none;color: black">Ticks</a></h1>
+    <p class="home_page_one_word">哎，又是没有写博客的一天-_-</p>
     <!-- 搜索框 -->
-    <div class="search_box page">
-        <div class="search_bar">
-            <input id="search_input" type="search" name="keyword" autocomplete="off" placeholder="输入标签，关键字等">
-            <label class="search_label">搜索</label>
+    <div class="home_page_search_box">
+        <div class="home_page_search_bar">
+            <input id="home_page_search_input" type="search" name="keyword" autocomplete="off" placeholder="输入标签，关键字等">
+            <label class="home_page_search_label">搜索</label>
         </div>
     </div>
     <!-- 显示博客 -->
     <div>
-        <div id="blogs_box_id" class="blogs_box">
-        </div>
-        <div class="page" id="main_page">
-        </div>
+        <div id="home_page_blogs_box"></div>
+        <div class="paging_navigation" id="home_page_paging_navigation"></div>
     </div>
 </div>
 <!-- 博客详情界面，拒绝多个页面跳转，贼烦 -->
-<div id="blog_detail_box">
+<div id="blog_detail_page">
+    <img src="../img/delete.png" id="blog_detail_delete_img">
+    <div id="blog_detail_box" class="blog_style_box"></div>
 </div>
 
-<script src="../lib/jquery-3.6.0.min.js"></script>
-<script src="../lib/highlight/highlight.min.js"></script>
-<script src="../lib/showdown/showdown.min.js"></script>
-<script src="../js/my_page.js"></script>
-<script src="../js/blog_index.js"></script>
-<script>
-    hljs.initHighlightingOnLoad();
-    MD = new showdown.Converter();
-    P.initMathod({
-        params: {
-            elemId: '#main_page',
-            total: '0',
-            pageNum: '5'
-        },
-        requestFunction: function (){
-            getBlogs(P, $("#blogs_box_id"));
-        }
-    });
-    P.config.pageIndex = 1;
-    getBlogs(P, $("#blogs_box_id"));
-    </script>
+<script src="../js/jquery.min.js"></script>
+<script src="../js/highlight/highlight.min.js"></script>
+<script src="../js/showdown/showdown.min.js"></script>
+<script src="../js/katex/katex.min.js"></script>
+<script src="../js/katex/auto-render.min.js"></script>
+<script src="../js/blog/paging_navigation.js"></script>
+<script src="../js/blog/blog_index.js"></script>
 
 </body>
 </html>
