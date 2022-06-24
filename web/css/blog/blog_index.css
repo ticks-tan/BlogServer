@@ -92,7 +92,7 @@ body::before{
 }
 
 /* 博客预览盒子 */
-#home_page_blogs_box{
+#home_page_blogs_box, #home_page_search_blogs_box{
     position: relative;
     width: 60%;
     margin-left: 20%;

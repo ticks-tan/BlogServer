@@ -46,13 +46,71 @@ function initBlogDetailPage() {
     });
 }
 
+// 初始化搜索框
+function initSearchInput() {
+    let result_box = $("#home_page_search_result_box");
+    result_box.hide();
+    let search_input = $("#home_page_search_input");
+    let last_val = search_input.val();
+    let show_box = $("#home_page_show_box");
+    let search_result_blogs = $("#home_page_search_blogs_box");
+
+    function search(){
+        let val = search_input.val();
+        if (val.length === 0 && val !== last_val){
+            // 值为空
+            search_result_blogs.empty();
+            result_box.hide();
+            show_box.show();
+        }else if (val !== last_val){
+            // 搜索结果
+            show_box.hide();
+            result_box.show();
+            $.ajax({
+                url: UrlManager.searchBlog + "?key=" + val,
+                type: "GET",
+                success: function (res){
+                    if (res.code === 200){
+                        let json = res["articles"];
+                        if (json && json instanceof Array){
+                            json.forEach(function (val, index,array){
+                                let blogItem = new BlogItem(val.id, val.title, val.tags,
+                                    new Date(parseInt(val["updateDate"]) * 1000).toLocaleString());
+                                search_result_blogs.append(blogItem.createNode());
+                            });
+                        }
+                    }else {
+                        search_result_blogs.append(
+                            new BlogErrorItem(res.message ? res.message : "搜索失败").createNode()
+                        );
+                    }
+                },
+                error: function (){
+                    search_result_blogs.append(new BlogErrorItem("请求失败!").createNode());
+                }
+            })
+        }
+        last_val = val;
+    }
+
+    search_input.keypress(function (event){
+        if (event.which === 13){
+            search();
+        }
+    });
+    search_input.on("blur", function (){
+        search();
+    })
+}
+
 // 文档就绪事件 -- 写初始化函数
 $(document).ready(function (){
-
-    // 初始化分页和数据
-    initBlogDateAndPaging();
+    // 初始化搜索框
+    initSearchInput();
     // 初始化博客详情页面
     initBlogDetailPage();
+    // 初始化分页和数据
+    initBlogDateAndPaging();
 });
 
 // 博客数据获取失败显示的文字
@@ -171,7 +229,7 @@ class BlogItem
                     detail_box.append(p);
                 }
             })
-        })
+        });
 
         return box;
     }
@@ -194,7 +252,7 @@ function getBlogs(pageObj, blogBox)
                         let blogItem = new BlogItem(val.id, val.title, val.tags,
                             new Date(parseInt(val["updateDate"]) * 1000).toLocaleString());
                         blogBox.append(blogItem.createNode());
-                    })
+                    });
                 }
             }else {
                 // 添加错误信息
