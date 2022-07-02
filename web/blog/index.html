@@ -10,6 +10,7 @@
 </head>
 <body>
 <!-- 主界面 -->
+<textarea id="text_copy" style="display:none;"></textarea>
 <div id="blog_home_page">
     <h1 class="home_page_title"><a href="../index.html" style="text-decoration: none;color: black">Ticks</a></h1>
     <p class="home_page_one_word">哎，又是没有写博客的一天-_-</p>
@@ -31,9 +32,14 @@
 </div>
 <!-- 博客详情界面，拒绝多个页面跳转，贼烦 -->
 <div id="blog_detail_page">
-    <img src="../img/delete.png" id="blog_detail_delete_img">
+    <img src="../img/delete.png" alt="Back Button" id="blog_detail_delete_img">
     <div id="blog_detail_box" class="blog_style_box"></div>
+    <!-- 分享博客 -->
+    <div id="blog_detail_share_img">
+        <img src="../img/share.png" alt="Share Button" title="文章不错，分享给大家？">
+    </div>
 </div>
+<img src="../img/back_top.png" alt="Back to top" id="back_top_btn">
 
 <script src="../js/jquery.min.js"></script>
 <script src="../js/highlight/highlight.min.js"></script>

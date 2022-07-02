@@ -44,6 +44,15 @@ function initBlogDetailPage() {
         $("#blog_home_page").show();
         $("#blog_detail_page").hide();
     });
+    $("#blog_detail_share_img img").on("click", function (){
+        let ele = $("text_copy");
+        ele.text(window.location.href).show();
+        let copy = document.getElementById("text_copy");
+        copy.select();
+        document.execCommand("copy", false, null);
+        ele.hide();
+        alert("已复制: " + window.location.href);
+    })
 }
 
 // 初始化搜索框
@@ -64,6 +73,7 @@ function initSearchInput() {
             show_box.show();
         }else if (val !== last_val){
             // 搜索结果
+            search_result_blogs.empty();
             show_box.hide();
             result_box.show();
             $.ajax({
@@ -78,6 +88,11 @@ function initSearchInput() {
                                     new Date(parseInt(val["updateDate"]) * 1000).toLocaleString());
                                 search_result_blogs.append(blogItem.createNode());
                             });
+                            if (json.length === 0){
+                                search_result_blogs.append(new BlogErrorItem("没有你想要的博客呢～").createNode());
+                            }
+                        }else {
+                            search_result_blogs.append(new BlogErrorItem("没有你想要的博客呢～").createNode());
                         }
                     }else {
                         search_result_blogs.append(
@@ -103,8 +118,19 @@ function initSearchInput() {
     })
 }
 
+function initBackToTop()
+{
+    $("#back_top_btn").on("click", function() {
+        $('#blog_detail_page,#blog_home_page').animate({
+                scrollTop: 0
+            }, 500);
+    });
+}
+
 // 文档就绪事件 -- 写初始化函数
 $(document).ready(function (){
+    // 初始化返回顶部
+    initBackToTop();
     // 初始化搜索框
     initSearchInput();
     // 初始化博客详情页面
