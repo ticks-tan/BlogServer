@@ -31,6 +31,6 @@ target_link_libraries(BlogServer OpenSSL::Crypto OpenSSL::SSL)
 
 # 链接 libhv nghttp2 mariadb
 target_link_libraries(BlogServer
-        ${PROJECT_SOURCE_DIR}/server/lib/libhv_static.a
-        /usr/lib/libnghttp2.so
+        libhv_static.a
+        libnghttp2
         mariadbcpp)

@@ -345,7 +345,7 @@ static int uploadBlogArticle(BlogApp* app, const HttpContextPtr& ptr)
             hv_md5_hex((unsigned char*)id.data(), id.size(), id_, 33);
             id = id_;
             // 数据库插入命令
-            tmpStr = "insert into blogs (id, title, author, tags, uploadDate, updateDate) values (?,?,?,?,?,?)";
+            tmpStr = "insert into blogs (id, title, author, tags, uploadDate, updateDate, content) values (?,?,?,?,?,?,?)";
             auto preStmt1(conn->prepareStatement(tmpStr.data()));
             // 设置各个参数
             preStmt1->setString(1, id);
@@ -354,6 +354,7 @@ static int uploadBlogArticle(BlogApp* app, const HttpContextPtr& ptr)
             preStmt1->setString(4, tags);
             preStmt1->setLong(5, now_time);
             preStmt1->setLong(6, now_time);
+            preStmt1->setString(7, iter->second.content);
 
             if (preStmt1->executeUpdate() > 0){
                 // 保存博客文章
@@ -428,6 +429,7 @@ static int firstInitBlogConfig(BlogApp* app, http_server_t* server, bool hasDB, 
                              "tags varchar(32) not null,"
                              "uploadDate long not null,"
                              "updateDate long not null,"
+                             "content varchar(2048),"
                              "primary key(id)"
                              ")default charset=utf8";
             // 创建数据库
